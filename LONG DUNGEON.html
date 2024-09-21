@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>LONG DUNGEON</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .status div {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            width: 30%;
+        }
+        #battle-log {
+            background-color: #2e2e2e;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        #actions button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #444;
+            border: none;
+            border-radius: 5px;
+            color: #f0f0f0;
+            cursor: pointer;
+        }
+        #actions button:hover {
+            background-color: #555;
+        }
+        #inventory {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        .monster {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #444;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>LONG DUNGEON</h1>
+        <div class="status">
+            <div id="player-status">
+                <h2>Jogador</h2>
+                <p>Nível: <span id="player-level">1</span></p>
+                <p>XP: <span id="player-xp">0</span> / <span id="xp-to-next">100</span></p>
+                <p>HP: <span id="player-hp">100</span> / <span id="player-max-hp">100</span></p>
+            </div>
+            <div id="phase-status">
+                <h2>Fase</h2>
+                <p>Fase Atual: <span id="current-phase">1</span></p>
+                <p>Monstros Restantes: <span id="monsters-remaining">0</span></p>
+            </div>
+            <div id="inventory">
+                <h2>Inventário</h2>
+                <ul id="inventory-list">
+                    <li>Nenhum item</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="battle-log"></div>
+
+        <div id="actions">
+            <button id="attack-button">Atacar</button>
+            <button id="use-item-button">Usar Item</button>
+            <button id="end-turn-button">Fim do Turno</button>
+        </div>
+    </div>
+
+    <script>
+        // Dados do Jogador
+        const player = {
+            level: 1,
+            xp: 0,
+            xpToNext: 100,
+            maxHp: 100,
+            hp: 100,
+            attack: 20,
+            accuracy: 70,
+            inventory: []
+
+
+        };
+
+        // Dados do Monstro
+        class Monster {
+            constructor(name, level,accuracy) {
+                this.name = name
+                this.level = level;
+                this.maxHp = 40 + (level - 1) * 10;
+                this.hp = this.maxHp;
+                this.attack = 10 + (level - 1) * 5;
+                this.xpReward = 50 * level;
+                this.itemDrop = Math.random() < 0.5 ? `Item Lv${level}` : null;
+                this.accuracy = accuracy;
+            }
+        }
+
+        let currentPhase = 1;
+        let monsters = [];
+
+        // Inicialização do Jogo
+        function initGame() {
+            log("Bem-vindo ao RPG de Batalha por Turnos!");
+            startPhase();
+        }
+
+        // Iniciar uma nova fase
+        function startPhase() {
+            log(`Iniciando Fase ${currentPhase}!`);
+            // Definir número de monstros com base na fase
+            const numMonsters = currentPhase + 2;
+            monsters = [];
+            for (let i = 0; i < numMonsters; i++) {
+                monsters.push(new Monster("Cleberson", currentPhase, 60));
+            }
+            updateStatus();
+        }
+
+        // Atualizar o status do jogo
+        function updateStatus() {
+            document.getElementById('player-level').innerText = player.level;
+            document.getElementById('player-xp').innerText = player.xp;
+            document.getElementById('xp-to-next').innerText = player.xpToNext;
+            document.getElementById('player-hp').innerText = player.hp;
+            document.getElementById('player-max-hp').innerText = player.maxHp;
+            document.getElementById('current-phase').innerText = currentPhase;
+            document.getElementById('monsters-remaining').innerText = monsters.length;
+            updateInventory();
+        }
+
+        // Atualizar o inventário
+        function updateInventory() {
+            const inventoryList = document.getElementById('inventory-list');
+            inventoryList.innerHTML = '';
+            if (player.inventory.length === 0) {
+                inventoryList.innerHTML = '<li>Nenhum item</li>';
+            } else {
+                player.inventory.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.innerText = item;
+                    const useBtn = document.createElement('button');
+                    useBtn.innerText = 'Usar';
+                    useBtn.style.marginLeft = '10px';
+                    useBtn.onclick = () => useItem(index);
+                    li.appendChild(useBtn);
+                    inventoryList.appendChild(li);
+                });
+            }
+        }
+
+        // Log de Batalha
+        function log(message) {
+            const battleLog = document.getElementById('battle-log');
+            const p = document.createElement('p');
+            p.innerText = message;
+            battleLog.appendChild(p);
+            battleLog.scrollTop = battleLog.scrollHeight;
+        }
+
+        function tryAttack() {
+                if (monsters.length === 0) {
+                log("Não há monstros para atacar!");
+                return;
+            }
+        const monster = monsters[0];
+        if (Math.floor(Math.random() * 100) < player.accuracy) {
+        // Atacar um monstro
+            attack(monster)
+    }
+    else{
+        log("Voce errou")
+    }
+}
+    function attack(monster) {
+
+        monster.hp -= player.attack;
+        log(`Você atacou o Monstro Lv${monster.level} e causou ${player.attack} de dano.`);
+
+        if (monster.hp <= 0) {
+            OnMonsterDeath(monster);
+        }
+        else
+        {
+            monstersTurn()
+        }
+        updateStatus();
+    }
+
+    function OnMonsterDeath(monster)
+    {
+        log(`Monstro Lv${monster.level} foi derrotado!`);
+        player.xp += monster.xpReward;
+        if (monster.itemDrop) {
+            player.inventory.push(monster.itemDrop);
+            log(`Monstro dropou: ${monster.itemDrop}`);
+        }
+        monsters.shift();
+        if (monsters.length === 0) {
+            log(`Fase ${currentPhase} concluída!`);
+            checkLevelUp();
+            currentPhase++;
+            setTimeout(startPhase, 2000);
+        }
+    }
+
+        // Usar um item
+        function useItem(index) {
+            const item = player.inventory[index];
+            if (item.startsWith('Item Lv')) {
+                const itemLevel = parseInt(item.split(' ')[1].replace('Lv', ''));
+                if (Math.floor(Math.random() * 100) < player.accuracy) {
+                player.maxHp += 20 * itemLevel;
+                player.hp += 20 * itemLevel;
+                log(`Você usou ${item} e aumentou sua vida em ${20 * itemLevel}.`);
+                }
+                else {player.attack += 5 * itemLevel;
+                log(`Você usou ${item} e aumentou seu ataque em ${5 * itemLevel}.`); }
+                player.inventory.splice(index, 1);
+                updateStatus();
+            }
+        }
+
+        // Verificar e aplicar level up
+        function checkLevelUp() {
+            while (player.xp >= player.xpToNext) {
+                player.xp -= player.xpToNext;
+                player.level++;
+                player.xpToNext = Math.floor(player.xpToNext * 1.5);
+                player.maxHp += 40;
+                player.hp = player.maxHp;
+                player.attack += 10;
+                log(`Você subiu para o nível ${player.level}!`);
+            }
+            updateStatus();
+        }
+
+        // Turno dos monstros
+        function monstersTurn() {
+            if (monsters.length === 0) return;
+            monsters.forEach(monster => {
+                const damage = monster.attack;
+                player.hp -= damage;
+                log(`Monstro Lv${monster.level} atacou você e causou ${damage} de dano.`);
+                if (player.hp <= 0) { 
+                    player.hp = 0
+                    log("Você foi derrotado! Fim de jogo.");
+                    endGame();
+                }
+            });
+            updateStatus();
+        }
+
+        // Finalizar turno
+        function endTurn() {
+            monstersTurn();
+        }
+
+        // Finalizar o jogo
+        function endGame() {
+            document.getElementById('actions').style.display = 'none';
+            log("Voce perdeu para a gangue do clebinho");
+        }
+
+        // Event Listeners
+        document.getElementById('attack-button').addEventListener('click', tryAttack);
+        document.getElementById('end-turn-button').addEventListener('click', endTurn);
+        document.getElementById('use-item-button').addEventListener('click', () => {
+            // Para simplificar, abrir o inventário já permite usar itens
+            log("Clique em 'Usar' ao lado do item no inventário para utilizá-lo.");
+        });
+
+        // Iniciar o jogo
+        initGame();
+    </script>
+</body>
+</html>
