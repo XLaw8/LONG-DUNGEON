@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>LONG DUNGEON</title>
@@ -12,22 +13,26 @@
             margin: 0;
             padding: 0;
         }
+
         #game-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
+
         .status {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
         }
+
         .status div {
             background-color: #333;
             padding: 10px;
             border-radius: 5px;
             width: 30%;
         }
+
         #battle-log {
             background-color: #2e2e2e;
             height: 200px;
@@ -37,6 +42,7 @@
             text-align: left;
             margin-bottom: 20px;
         }
+
         #actions button {
             padding: 10px 20px;
             margin: 5px;
@@ -46,9 +52,11 @@
             color: #f0f0f0;
             cursor: pointer;
         }
+
         #actions button:hover {
             background-color: #555;
         }
+
         #inventory {
             background-color: #333;
             padding: 10px;
@@ -56,6 +64,7 @@
             text-align: left;
             margin-top: 20px;
         }
+
         .monster {
             margin: 10px 0;
             padding: 10px;
@@ -64,6 +73,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="game-container">
         <h1>LONG DUNGEON</h1>
@@ -113,7 +123,7 @@
 
         // Dados do Monstro
         class Monster {
-            constructor(name, level,accuracy) {
+            constructor(name, level, accuracy) {
                 this.name = name
                 this.level = level;
                 this.maxHp = 40 + (level - 1) * 10;
@@ -188,63 +198,63 @@
         }
 
         function tryAttack() {
-                if (monsters.length === 0) {
+            if (monsters.length === 0) {
                 log("Não há monstros para atacar!");
                 return;
             }
-        const monster = monsters[0];
-        if (Math.floor(Math.random() * 100) < player.accuracy) {
-        // Atacar um monstro
-            attack(monster)
-    }
-    else{
-        log("Voce errou")
-    }
-}
-    function attack(monster) {
+            const monster = monsters[0];
+            if (Math.floor(Math.random() * 100) < player.accuracy) {
+                // Atacar um monstro
+                attack(monster)
+            }
+            else {
+                log("Voce errou")
+            }
+        }
+        function attack(monster) {
 
-        monster.hp -= player.attack;
-        log(`Você atacou o Monstro Lv${monster.level} e causou ${player.attack} de dano.`);
+            monster.hp -= player.attack;
+            log(`Você atacou o Monstro Lv${monster.level} e causou ${player.attack} de dano.`);
 
-        if (monster.hp <= 0) {
-            OnMonsterDeath(monster);
+            if (monster.hp <= 0) {
+                OnMonsterDeath(monster);
+            }
+            else {
+                monstersTurn()
+            }
+            updateStatus();
         }
-        else
-        {
-            monstersTurn()
-        }
-        updateStatus();
-    }
 
-    function OnMonsterDeath(monster)
-    {
-        log(`Monstro Lv${monster.level} foi derrotado!`);
-        player.xp += monster.xpReward;
-        if (monster.itemDrop) {
-            player.inventory.push(monster.itemDrop);
-            log(`Monstro dropou: ${monster.itemDrop}`);
+        function OnMonsterDeath(monster) {
+            log(`Monstro Lv${monster.level} foi derrotado!`);
+            player.xp += monster.xpReward;
+            if (monster.itemDrop) {
+                player.inventory.push(monster.itemDrop);
+                log(`Monstro dropou: ${monster.itemDrop}`);
+            }
+            monsters.shift();
+            if (monsters.length === 0) {
+                log(`Fase ${currentPhase} concluída!`);
+                checkLevelUp();
+                currentPhase++;
+                setTimeout(startPhase, 2000);
+            }
         }
-        monsters.shift();
-        if (monsters.length === 0) {
-            log(`Fase ${currentPhase} concluída!`);
-            checkLevelUp();
-            currentPhase++;
-            setTimeout(startPhase, 2000);
-        }
-    }
 
         // Usar um item
         function useItem(index) {
             const item = player.inventory[index];
             if (item.startsWith('Item Lv')) {
                 const itemLevel = parseInt(item.split(' ')[1].replace('Lv', ''));
-                if (Math.floor(Math.random() * 100) < player.accuracy) {
-                player.maxHp += 20 * itemLevel;
-                player.hp += 20 * itemLevel;
-                log(`Você usou ${item} e aumentou sua vida em ${20 * itemLevel}.`);
+                if (Math.floor(Math.random() * 100) < 50) {
+                    player.maxHp += 25 * itemLevel;
+                    player.hp += 25 * itemLevel;
+                    log(`Você usou ${item} e aumentou sua vida em ${20 * itemLevel}.`);
                 }
-                else {player.attack += 5 * itemLevel;
-                log(`Você usou ${item} e aumentou seu ataque em ${5 * itemLevel}.`); }
+                else {
+                    player.attack += 10 * itemLevel;
+                    log(`Você usou ${item} e aumentou seu ataque em ${5 * itemLevel}.`);
+                }
                 player.inventory.splice(index, 1);
                 updateStatus();
             }
@@ -271,7 +281,7 @@
                 const damage = monster.attack;
                 player.hp -= damage;
                 log(`Monstro Lv${monster.level} atacou você e causou ${damage} de dano.`);
-                if (player.hp <= 0) { 
+                if (player.hp <= 0) {
                     player.hp = 0
                     log("Você foi derrotado! Fim de jogo.");
                     endGame();
@@ -303,4 +313,5 @@
         initGame();
     </script>
 </body>
+
 </html>
